@@ -1,1 +1,0 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([["VxDl"],{VxDl:function(e,n,o){"use strict";o.r(n);var u=o("oP5V");o.d(n,"VueCropper",function(){return u.default});var p=function(e){e.component("VueCropper",u.default)};"undefined"!=typeof window&&window.Vue&&p(window.Vue),n.default={version:"0.4.4",install:p,VueCropper:u.default}}}]);
