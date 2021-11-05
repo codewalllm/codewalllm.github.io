@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>api文档</title>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/apiMenu.js"></script>
+    <script src="js/apiData.js"></script>
+    <script src="js/function.js"></script>
+    <script src="js/vue.prod.js"></script>
+    <script src="js/element.js"></script>
+    <style>
+        .rightMenu:hover {
+            color: blue;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div id="header" style="min-width:800px;max-width: 1240px; margin: 0px auto;"></div>
+    </div>
+    <div style="background-color:#eee;padding: 10px;">
+        <div id="vue" class="flex" style="min-width:800px;max-width: 1200px; margin: 0px auto;">
+            <!-- 左侧主菜单 -->
+            <div :style="`margin-right: 20px;width:200px;height:${pageHeight}px;overflow:auto;background-color: #fff;`">
+                <el-tree ref="tree" :data="menus" node-key="config" highlight-current
+                    :style="`background-color:transparent`" @node-click="handleNodeClick" />
+            </div>
+            <!-- 参数配置 -->
+            <div id="docContent" v-if="getQueryString('fileName')=='paramConfig'" class="flex-1"
+                :style="`height:${pageHeight}px;overflow:auto;`">
+                <div v-for="(type,typeI) in paramType" :key="typeI">
+                    <h2 :id="`locationPage_${typeI+1}`" :name="`locationPage_${typeI+1}`">{{typeI+1}}、{{type.name}}</h2>
+                    <div v-if="type.desc" v-html="type.desc"></div>
+                    <div v-for="(attr, attrI) in type.childs" :key="attrI">
+                        <h3>{{attr.name}}</h3>
+                        <div style="padding: 10px;background-color: #fff;word-wrap:break-word;" v-if="attr.desc"
+                            v-html="attr.desc"></div>
+                        <div v-if="attr.childs&&attr.childs.length" style="margin-top: 10px;">
+                            <el-table :data="attr.childs" border stripe fit>
+                                <el-table-column type="index" label="序号" width="50" align="center"></el-table-column>
+                                <el-table-column prop="name" label="属性名" min-width="2"></el-table-column>
+                                <el-table-column prop="type" label="类型" min-width="2"></el-table-column>
+                                <el-table-column prop="desc" label="说明" min-width="3"></el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+                    <div v-if="type.demo">
+                        <h3>示例</h3>
+                        <div><a target="_blank" :href="`loadDemo.html?demo=${type.demo.href}`">{{type.demo.name}}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 右侧页面级菜单 -->
+            <div :style="`margin-left: 20px;width:180px;height:${pageHeight}px;overflow:auto;`">
+                <div v-for="(item,index) in paramType" class="flex cursor-pointer rightMenu"
+                    @click="locationPage(`locationPage_${index+1}`)" style="background-color: #fff; padding: 5px 10px;">
+                    <div style="padding-top: 4px;">{{index+1}}.</div>
+                    <div>{{item.name}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    Vue.createApp({
+        data() {
+            return {
+                // 左侧菜单
+                menus: apiMenu,
+                // 跳转的页面路径
+                pageUrl: "",
+                // 页面
+                pageWidth: 0,
+                pageHeight: 0,
+                // 右侧列表
+                paramType: [],
+                // 获取地址栏参数
+                getQueryString,
+            }
+        },
+        created() {
+            // 设置iframe的窗口高度
+            window.addEventListener("resize", this.getWindowResizing);
+            this.getWindowResizing();
+        },
+        mounted() {
+            $("#header").load(`template/header.html`)
+            this.loadPage()
+        },
+        methods: {
+            // 窗口的宽高
+            getWindowResizing() {
+                this.pageWidth = window.innerWidth;
+                this.pageHeight = window.innerHeight - 20 - 60;
+            },
+            // 循环选择子节点
+            getItem(config, list = this.menus) {
+                this.paramType = [];
+                setTimeout(() => {
+                    list.find((item) => {
+                        if (item.config && item.config == config) {
+                            this.$refs.tree.setCurrentKey(item.config, true);
+                            this.paramType = pageDataConfig[getQueryString("config")];
+                            setTimeout(() => {
+                                this.locationPage(window.location.hash.slice(1))
+                            }, 16)
+                            return item;
+                        } else {
+                            if (item.children) {
+                                this.getItem(config, item.children);
+                            }
+                        }
+                    });
+                }, 0)
+            },
+            // 加载页面
+            loadPage(item) {
+                let fileName = this.getQueryString("fileName");
+                let config = this.getQueryString("config");
+                if (fileName && config) {
+                    this.pageUrl = `./${fileName}.html?config=${config}#${item && item.name}`
+                    this.getItem(config)
+                } else {
+                    this.handleNodeClick(this.menus[0])
+                }
+            },
+            // 点击左侧菜单
+            handleNodeClick(data) {
+                if (data.config) {
+                    window.history.pushState({}, 0, `?fileName=${data.fileName}&config=${data.config}`);
+                    this.loadPage()
+                }
+            },
+            // 菜单的锚链接
+            locationPage(item) {
+                location.href = "#" + item
+            },
+        }
+    }).use(ElementPlus).mount('#vue')
+</script>
+
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <title>天房科技</title>
+
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/function.js"></script>
+    <script src="js/vue.prod.js"></script>
+    <script src="js/element.js"></script>
+    <script src="js/axios.js"></script>
+    <script src="js/demoMenu.js"></script>
+    <style>
+        .menuItem:hover {
+            transform: scale(1.1) translateZ(0);
+            z-index: 100;
+            -webkit-transform: scale(1.1) translateZ(0);
+            transition-duration: .4s;
+            box-shadow: 1px 1px 6px rgba(150, 150, 150, 0.6);
+            -webkit-box-shadow: 1px 1px 6px rgba(150, 150, 150, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="vue">
+        <div id="header"></div>
+        <div class="flex">
+            <div style="background-color: rgb(66,66,66);">
+                <menu-c :menus="twoMenu(menus)" :isCollapse="false" :defaultActive="defaultActive"
+                    @select="menuSelect" />
+            </div>
+            <div class="flex-1" :style="`height:${pageHeight}px;overflow:auto`">
+                <div v-for="(menu,menuI) in menus" :key="menuI">
+                    <div :id="menu.path" :name="menu.path"
+                        style="font-size: 24px;margin: 20px 20px 0px;padding-bottom: 10px; border-bottom: 1px solid #04BEA6;">
+                        <i v-if="menu.meta.icon" class="fa iconName align-center" :class="menu.meta.icon"
+                            style="padding: 0px 6px"></i>
+                        <span>{{menu.name}}</span>
+                    </div>
+                    <div style="padding: 20px;" v-for="(subMenu,subMenuI) in menu.children" :key="subMenuI">
+                        <div :id="subMenu.path" :name="subMenu.path" style="margin: 0px 10px;font-size: 20px;">
+                            {{subMenu.name}}
+                        </div>
+                        <div class="cursor-pointer align-center menuItem" @click="seeDemo(item)"
+                            style="margin: 15px;width: 240px;display: inline-block;" :id="item.path" :name="item.path"
+                            v-for="(item,index) in subMenu.children" :key="index">
+                            <div style="font-size: 14px;height: 30px;line-height: 30px;border: 1px solid #ccc;">
+                                {{item.name}}</div>
+                            <img style="width: 100%;" src="img/model.png" :alt="item.name">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+<script>
+    Vue.createApp({
+        data() {
+            return {
+                // 页面的宽高
+                pageWidth: 0,
+                pageHeight: 0,
+                // 菜单相关
+                menus: demoMenu,
+                defaultActive: ""
+            }
+        },
+        created() {
+            // 设置iframe的窗口高度
+            window.addEventListener("resize", this.getWindowResizing);
+            this.getWindowResizing();
+        },
+        mounted() {
+            $("#header").load(`template/header.html`)
+        },
+        methods: {
+            // 窗口的宽高
+            getWindowResizing() {
+                this.pageWidth = window.innerWidth;
+                this.pageHeight = window.innerHeight - 60;
+                let iframeDoc = document.getElementById("iframeDoc");
+                if (iframeDoc) {
+                    iframeDoc.setAttribute("height", this.pageHeight);
+                }
+            },
+            // 菜单的锚链接
+            menuSelect(item) {
+                location.href = "#" + item
+            },
+            // 查看demo
+            seeDemo(item) {
+                window.location.href = `loadDemo.html?demo=${item.path}`
+            },
+            // 返回两层菜单
+            twoMenu(menus, retMenus = []) {
+                for (let i = 0; i < menus.length; i++) {
+                    let item = {};
+                    for (let key in menus[i]) {
+                        if (key != "children") {
+                            item[key] = menus[i][key]
+                        }
+                    }
+                    retMenus.push(item)
+                    if (menus[i].children && menus[i].children.length && menus[i].children[0].children && menus[i].children[0].children.length) {
+                        item.children = []
+                        this.twoMenu(menus[i].children, item.children)
+                    }
+                }
+                setTimeout(() => {
+                    // 设置左侧菜单的当前选中值
+                    this.defaultActive = window.location.hash.slice(1)
+                    this.defaultActive && this.menuSelect(this.defaultActive)
+                }, 500)
+                return retMenus
+            }
+        }
+    }).use(ElementPlus).component("menuC", menuC).component("subMenu", subMenu).mount('#vue')
+</script>
+
+</html>

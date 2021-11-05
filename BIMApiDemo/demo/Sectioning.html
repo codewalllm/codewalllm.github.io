@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+  <title>剖切</title>
+  <!-- 核心引擎（必须引用） -->
+  <link href="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/Widgets/widgets.css" rel="stylesheet" />
+  <script src="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/TkEngine.js"></script>
+  <!-- 引擎插件（必须引用） -->
+  <script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/three.min.js"></script>
+  <!-- 提供对外bim功能接口（必须引用）-->
+  <script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbim.js"></script>
+  <script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbimsdk.js"></script>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+  <!-- 引擎渲染容器 -->
+  <div id="tkEngineContainer" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden"></div>
+  <div
+    style="background-color: rgba(39, 39, 39, 0.7);position: absolute;z-index: 10;top: 10px;left: 5px;display: flex;flex-direction: column;align-items: center;justify-content: space-around;color: white;border-radius: 5px;padding: 5px;">
+    <button type="button" onclick="sectionBoxStart()">开始剖切</button>
+    <button type="button" onclick="isSectioning('none'),TKBimSdk.Section.clean()" style="margin-top: 10px">
+      清理剖切
+    </button>
+  </div>
+  <!-- 修改剖切值 -->
+  <div id="ModifySectioning"
+    style="background-color: rgba(39, 39, 39, 0.7);position: absolute;z-index: 10;bottom: 10px;left: 5px;display: flex;flex-direction: column;align-items: center;justify-content: space-around;color: white;border-radius: 5px;padding: 5px;">
+    <button type="button" onclick="TKBimSdk.Section.setMode(0)">
+      保留剖切盒外模型
+    </button>
+    <button type="button" onclick="TKBimSdk.Section.setMode(1)" style="margin-top: 10px">
+      保留剖切盒内模型
+    </button>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">旋转的角度</span>
+      <input type="number" min="0" max="360" value="0" onchange="TKBimSdk.Section.setAngle(value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到左边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(0,value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到右边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(1,value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到前边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(2,value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到后边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(3,value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到上边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(5,value)" style="width: 50px" />
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px">
+      <span style="flex: 1; font-size: 13px">中心点到下边的距离</span>
+      <input type="number" min="-100" max="100" value="100" onchange="changeSectionBoxValue(4,value)" style="width: 50px" />
+    </div>
+  </div>
+</body>
+
+<script>
+  //加载场景
+  TKBimSdk.Scene.loadScene(sessionStorage.getItem("token"));
+  //模型参数配置
+  var model = {
+    baseDomain: "https://tkbim-dataserver.tfhulian.com:2627", // BIM模型数据接口服务域名地址
+    projectId: "bd425ebdc86b457992a99471fd67ddae", //项目id
+    viewId: "0e60c8f535b245de824f6dacf07ae5b9", //模型viewId
+    modelCenter: {
+      longitude: 117.24249519270747,
+      latitude: 39.080722698745542,
+      altitude: 3,
+    }, //模型中心点坐标：{经度,纬度,高程}
+    viewRatio: 50, //模型可视距离系数
+  };
+  // 添加模型（可在加载场景之前添加模型，此时添加模型的callback回调不起作用）
+  TKBimSdk.TK3DTileset.add3DTiles_Bim(model, (viewId) => {
+    //添加模型的回调方法
+    TKBimSdk.TK3DTileset.setCollect([viewId], true); //设置模型组同时移动到模型位置
+  });
+  // 模型的包围盒信息
+  let modelsBox;
+  // 开始剖切
+  function sectionBoxStart() {
+    // 获取模型的包围盒信息
+    modelsBox = TKBimSdk.TK3DTileset.getBoundingBox([model.viewId]);
+    TKBimSdk.Section.start([model.viewId], {
+      coordinate: null, //剖切盒中心点坐标（笛卡尔坐标）
+      sectionBoxValues: modelsBox, // 获取包围盒信息（剖切盒大小:[20,20,20,20,20,20]）
+      boxAngle: 0, //旋转角度，0-360，默认0
+      // boxAlpha: 0.3, //包围盒透明度0-1的数值，默认0.3
+    });
+    isSectioning("block");
+  }
+  // 默认隐藏修改
+  isSectioning("none");
+  // 是否正在剖切中
+  function isSectioning(status) {
+    document.getElementById("ModifySectioning").style.display = status;
+  }
+  // 当前包围盒所需要的百分比
+  let percentages = [1, 1, 1, 1, 1, 1];
+  // 修改自定义剖切的值
+  function changeSectionBoxValue(index, percentage) {
+    percentages[index - 0] = (percentage - 0) / 100;
+    let BoxValues = [];
+    for (let i = 0; i < 6; i++) {
+      BoxValues.push(modelsBox[i] * percentages[i]);
+    }
+    TKBimSdk.Section.setValue(BoxValues);
+  }
+</script>
+
+</html>

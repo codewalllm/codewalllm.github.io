@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" style="width: 100%;height: 100%;margin: 0;padding: 0;overflow: hidden;">
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+	<title>开挖</title>
+	<!-- 核心引擎（必须引用） -->
+	<link href="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/Widgets/widgets.css" rel="stylesheet" />
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/TkEngine.js"></script>
+	<!-- 引擎插件（必须引用） -->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/three.min.js"></script>
+	<!-- 提供对外bim功能接口（必须引用）-->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbim.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbimsdk.js"></script>
+</head>
+
+<body style="width: 100%;height: 100%;margin: 0;padding: 0;overflow: hidden;">
+	<!-- 引擎渲染容器 -->
+	<div id="tkEngineContainer" style="width: 100%;height: 100%;margin: 0;padding: 0;overflow: hidden;"></div>
+	<div
+		style="background-color: rgba(39, 39, 39, 0.7);position: absolute;z-index: 10;top: 10px;left: 5px;display: flex;flex-direction: column;align-items: center;justify-content: space-around;color: white;border-radius: 5px;padding: 5px;">
+		<button type="button" onclick="excavationStart()">开挖</button>
+		<button type="button" onclick="excavationByCoordinates()" style="margin-top: 10px;">根据坐标点开挖</button>
+		<div style="display: flex;align-items: center;margin-top: 10px;">
+			<span style="flex: 1;font-size: 13px;">开挖深度</span>
+			<input type="number" min="0" value="30" onchange="TKBimSdk.Excavation.setDepth(value)" style="width: 50px;">
+		</div>
+		<button type="button" onclick="TKBimSdk.Excavation.clean()" style="margin-top: 10px;">清理开挖</button>
+	</div>
+	<!-- 提示信息 -->
+	<div id="curStatus"
+		style="text-align:center;background-color: rgba(39, 39, 39, 0.7);position: absolute;z-index: 10;top: 10px;left: 50%;transform: translate(-50%, 0%);border-radius: 5px;padding: 5px 10px;color: #fff">
+		<div>右键点击停止开挖</div>
+	</div>
+</body>
+
+<script>
+	// 开挖
+	function excavationStart() {
+		TKBimSdk.Excavation.start([model.viewId],
+			{
+				bottom: 30, //开挖深度，默认30米，非必填
+				isShowChartlet: true, //是否显示开挖后的贴图
+			},
+			(data) => { } //开挖完成回调,返回开挖面积
+		)
+	};
+	// 根据坐标点开挖
+	function excavationByCoordinates() {
+		// 根据坐标点位开挖
+		TKBimSdk.Excavation.startFromCoordinates([model.viewId],
+			{
+				coordinates: [
+					{ "x": -2269396.4363704575, "y": 4407774.989784907, "z": 3999286.7391844317 },
+					{ "x": -2269420.7808441683, "y": 4407761.468056196, "z": 3999287.8196568177 },
+					{ "x": -2269410.8859291067, "y": 4407784.392752288, "z": 3999260.916595032 }
+				],//开挖点坐标数组
+				bottom: 30,
+				isShowChartlet: false,//是否显示开挖后的贴图
+			},
+			(data) => { }
+		)
+	}
+	//加载场景
+	TKBimSdk.Scene.loadScene(sessionStorage.getItem("token"),
+		{
+			isBimViewMode: false,
+			controls: {
+				visibleCube: false, //是否显示操作器,默认true,非必要 
+				visibleFPS: false, //是否显示帧率,默认true,非必要  
+			}
+		}
+	);
+	//模型参数配置
+	var model = {
+		baseDomain: "https://tkbim-dataserver.tfhulian.com:2627", // BIM模型数据接口服务域名地址
+		projectId: "bd425ebdc86b457992a99471fd67ddae",//项目id
+		viewId: "0e60c8f535b245de824f6dacf07ae5b9",//模型viewId
+		modelCenter: { longitude: 117.24249519270747, latitude: 39.080722698745542, altitude: 3 }, //模型中心点坐标：{经度,纬度,高程}
+		viewRatio: 50, //模型可视距离系数
+	};
+	// 添加模型（可在加载场景之前添加模型，此时添加模型的callback回调不起作用）
+	TKBimSdk.TK3DTileset.add3DTiles_Bim(model, (viewId) => {
+		//添加模型的回调方法
+		TKBimSdk.TK3DTileset.setCollect([viewId], true); //设置模型组同时移动到模型位置
+	});
+</script>
+
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+
+    <title>示例</title>
+    <link rel="stylesheet" href="css/common.css">
+
+    <script src="ace/ace.js"></script>
+    <script src="ace/ace.js" type="text/JavaScript" charset="utf-8"></script>
+    <script src="ace/theme-twilight.js" type="text/JavaScript" charset="utf-8"></script>
+    <script src="js/demoMenu.js"></script>
+    <script src="js/function.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/vue.prod.js"></script>
+    <script src="js/element.js"></script>
+    <script src="js/axios.js"></script>
+</head>
+
+<body style="overflow:hidden;">
+    <div id="vue">
+        <div id="header"></div>
+        <div class="flex">
+            <div style="background-color: rgb(66,66,66);">
+                <menu-c :menus="menus" :isCollapse="true" :defaultActive="getQueryString('demo')"
+                    @select="menuSelect" />
+            </div>
+            <div class="color-f cursor-pointer" :class="codeShow?'el-icon-full-screen':'el-icon-crop'"
+                @click="codeShow=!codeShow"
+                style="font-size: 16px;position: fixed;top: 65px;right: 5px;background-color: rgba(0, 0, 0, 0.5);padding: 5px 10px;">
+                {{codeShow?"展开":"关闭"}}</div>
+            <div class="flex-1" v-show="codeShow">
+                <div class="flex flex-align-center" style="height: 40px;">
+                    <div class="flex-1 margin-l-20">源代码编辑器</div>
+                    <div class="margin-r-20 color-3782dc cursor-pointer el-icon-refresh-left" @click="loadHtml()">
+                        重置
+                    </div>
+                    <div class="margin-r-20 color-3782dc cursor-pointer el-icon-caret-right" @click="loadContent()">
+                        运行
+                    </div>
+                </div>
+                <div id="editor" :style="`font-size:15px;height: ${pageHeight-40}px;overflow: auto;`">
+                </div>
+            </div>
+            <div id="iframeContent" class="flex-1"></div>
+        </div>
+    </div>
+</body>
+<script>
+    // 获取token
+    let getToken = () => {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: "https://auth.tfhulian.com/tfproject-auth/auth/createToken.rest",
+                method: "post",
+                headers: { 'Content-Type': 'application/json;charset=utf8' },
+                data: JSON.stringify({ payload: JSON.stringify({ bimProjectId: "bd425ebdc86b457992a99471fd67ddae" }) }),
+                success(res) {
+                    if (res.code == 200) {
+                        let tokenTime = new Date().getTime() + (24 * 60 * 60 - 1) * 1000
+                        sessionStorage.setItem("token", res.data)
+                        sessionStorage.setItem("tokenTime", tokenTime)
+                        sessionStorage.setItem("tokenDateTime", PARSETIME(tokenTime))
+                        resolve(res)
+                    } else {
+                        reject(res)
+                    }
+                }
+            })
+        })
+    }
+    Vue.createApp({
+        data() {
+            return {
+                // 注册获取token
+                getToken,
+                // 菜单
+                menus: demoMenu,
+                getQueryString,
+                // 页面的宽高
+                pageWidth: 0,
+                pageHeight: 0,
+                // 代码编辑环境
+                editor: null,
+                // 左侧代码是否显示
+                codeShow: true,
+                // 加载信息
+                loading: null,
+                timeSetInter: null,
+            }
+        },
+        created() {
+            // 设置iframe的窗口高度
+            window.addEventListener("resize", this.getWindowResizing);
+            this.getWindowResizing();
+        },
+        mounted() {
+            $("#header").load(`template/header.html`)
+            this.initAce().then(() => { this.setToken().then(() => { this.loadHtml() }) });
+        },
+        beforeUnmount() {
+            this.timeSetInter && clearInterval(this.timeSetInter);
+        },
+        methods: {
+            // 获取token
+            setToken() {
+                return new Promise((resolve, reject) => {
+                    this.loadInfo("token获取中...")
+                    getToken().then(() => {
+                        this.loading.close()
+                        this.verificationToken()
+                        resolve()
+                    }).catch(() => {
+                        this.loading.close()
+                        alert("token获取失败,请重新刷新")
+                        reject()
+                    })
+                })
+            },
+            // 页面loading
+            loadInfo(text) {
+                // 获取token
+                this.loading = this.$loading({
+                    lock: true,
+                    text: text || "加载中...",
+                    spinner: "el-icon-loading",
+                    background: "rgba(0, 0, 0, 0.7)",
+                });
+            },
+            // 验证token是否过期
+            verificationToken() {
+                // 定时获取token，防止过期
+                this.timeSetInter = setInterval(() => {
+                    // 判断token过期
+                    if (Number(sessionStorage.getItem("tokenTime")) < new Date().getTime()) {
+                        clearInterval(this.timeSetInter);
+                        alert("token过期，需要重新加载");
+                        this.setToken().then(() => { this.loadContent() })
+                    }
+                }, 300);
+            },
+            // 窗口的宽高
+            getWindowResizing() {
+                this.pageWidth = window.innerWidth;
+                this.pageHeight = window.innerHeight - 60;
+                let iframeDoc = document.getElementById("iframeDoc");
+                if (iframeDoc) {
+                    iframeDoc.setAttribute("height", this.pageHeight);
+                }
+            },
+            // 菜单切换内容
+            menuSelect(demo) {
+                window.history.pushState({}, 0, `?demo=${demo}`);
+                this.loadHtml()
+            },
+            // 加载html代码
+            loadHtml() {
+                this.editor.setValue("...")
+                this.loadInfo("代码获取中...")
+                // 获取菜单路径 -> 获取文件名
+                let pathArr = getQueryString("demo").split("_")
+                axios.get(`demo/${pathArr[pathArr.length - 1]}.html`).then(res => {
+                    this.loading.close()
+                    this.aceFun(res.data)
+                }).catch(() => { this.loading.close() })
+            },
+            // 初始化环境
+            initAce() {
+                return new Promise((resolve) => {
+                    this.editor = ace.edit("editor");
+                    this.editor.setTheme("ace/theme/monokai");
+                    this.editor.getSession().setMode("ace/mode/javascript");
+                    this.editor.getSession().setUseWrapMode(true);
+                    resolve()
+                })
+            },
+            // 加载左侧代码文件
+            aceFun(code) {
+                this.editor.session.replace(new ace.Range(0, 0, 1, 1), code.replace(/<!-- Code injected by live-server -->([\s\S]*?)<\/script>/, ""));
+                this.loadContent();
+            },
+            // 加载内容
+            loadContent() {
+                this.loadInfo("编译中...")
+                // 获取容器
+                let iframeContent = document.getElementById("iframeContent");
+                iframeContent.innerHTML = "";
+                // 创建iframe标签
+                let iframe = document.createElement("iframe");
+                iframe.id = "iframeDoc";
+                iframe.setAttribute("width", "100%");
+                iframe.setAttribute("height", this.pageHeight);
+                iframe.setAttribute("frameborder", 0);
+                iframeContent.append(iframe);
+                // 资源
+                let iframeDocument = iframe.contentWindow.document;
+                iframe.contentWindow.resources = window.resources ? window.resources.resources : {};
+                // 加载资源
+                iframeDocument.open();
+                iframeDocument.write(this.editor.getValue());
+                iframeDocument.close();
+                // 设置title
+                iframe.addEventListener("load", () => {
+                    this.loading.close()
+                    document.title = iframeDocument.title || "天房科技";
+                });
+            }
+        }
+    }).use(ElementPlus).component("menuC", menuC).component("subMenu", subMenu).mount('#vue')
+</script>
+
+</html>

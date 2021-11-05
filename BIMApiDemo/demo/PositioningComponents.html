@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+	<title>定位到构件</title>
+	<!-- 核心引擎（必须引用） -->
+	<link href="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/Widgets/widgets.css" rel="stylesheet" />
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/TkEngine.js"></script>
+	<!-- 引擎插件（必须引用） -->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/three.min.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/jquery-3.4.1.min.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/html2canvas.min.js"></script>
+	<!-- 提供对外bim功能接口（必须引用）-->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbim.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbimsdk.js"></script>
+	<style>
+		/* 树的颜色 */
+		.layui-tree-txt {
+			color: #fff !important;
+		}
+
+		.layui-tree-icon .layui-icon {
+			color: #fff !important;
+		}
+	</style>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+	<!-- 引擎渲染容器 -->
+	<div id="tkEngineContainer" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden"></div>
+	<!-- 树形容器 -->
+	<div style="
+        max-height: 95%;
+        padding-bottom: 10px;
+        position: absolute;
+        left: 10px;
+        top: 20px;
+        background-color: rgba(39, 39, 39, 0.7);
+        overflow: auto;
+      ">
+		<div id="test1" class="demo-tree demo-tree-box layui-this"></div>
+	</div>
+</body>
+
+<!-- 引入layUI插件 -->
+<link rel="stylesheet" href="//unpkg.com/layui@2.6.8/dist/css/layui.css" />
+<script src="//unpkg.com/layui@2.6.8/dist/layui.js"></script>
+<script>
+	//模型配置
+	let model = {
+		projectId: "bd425ebdc86b457992a99471fd67ddae", //项目id
+		viewId: "0e60c8f535b245de824f6dacf07ae5b9", //模型viewId
+		version: "",
+		modelCenter: {
+			longitude: 117.24249519270747,
+			latitude: 39.080722698745542,
+			altitude: 3,
+		}, //模型中心点坐标：{经度,纬度,高程}
+		viewRatio: 50, //模型可视距离系数
+	};
+
+	//场景配置
+	let sceneOptions = {
+		isBimViewMode: true, //是否BIM模式加载(false:GIS模式，true:BIM模式，默认true),非必填。
+		isModelsCenter: true, //设置模型场景下的旋转中心( true：以模型为中心,false：以GIS场景为中心，默认false),非必填。
+		isTransparentOfDis: 50, //相机与选中构件透明化大距离，默认50米，设置为0则相机与构件中间始终透明,非必要。
+		controls: {
+			visibleCube: true, //是否显示操作器,默认true,非必填
+			visibleFPS: false, //是否显示帧率,默认true,非必填
+		},
+	};
+
+	let bimCallbacks = {
+		sceneInitedCb: () => {
+			//设置模型集合
+			TKBimSdk.TK3DTileset.setCollect([model.viewId], true);
+			model.version = TKBimSdk.TK3DTileset.getCurrentVersion(model.viewId);
+
+			loadElementTree();
+		},
+		//左键点击
+		onMouseLeftClickCb: (data) => {
+		},
+		//右键点击
+		onMouseRightClick: (data) => { },
+		//左键拖拽
+		onMouseLeftDraggingCb: () => { },
+		//滚轮滚动事件
+		onMouseWheelCb: () => { },
+		//框选构件回调
+		onBoxChooseCb: (viewIds) => { },
+		//当前模型剩余Tileset文件数量（num：剩余Tileset文件数量）
+		onTilesetLoadingCb: (num) => { },
+	};
+
+	//添加模型
+	TKBimSdk.TK3DTileset.add3DTiles_Bim(model);
+	// 初始化场景
+	TKBimSdk.Scene.loadScene(sessionStorage.getItem("token"), sceneOptions, bimCallbacks);
+
+
+	function loadElementTree() {
+		let data = [];
+		$.ajax({
+			url: `https://tkbim-dataserver.tfhulian.com:2627/bimserver/modelinfo/treeinfo/${model.projectId}/${model.viewId}/${model.version}`,
+			type: "GET",
+			//Header头部添加Token参数
+
+			dataType: "text",
+			data: { code: $("#packCode").val() },
+			success: function (data) {
+				data = eval("(" + data + ")");
+				data = data.data.childs;
+				setTimeout(() => {
+					layui.use("tree", function () {
+						var tree = layui.tree;
+						//渲染
+						var inst1 = tree.render({
+							elem: "#test1", //绑定元素
+							click: function (obj) {
+								if (!obj.data.children) {
+									// bimViewer.locationToElement(
+									// 	"0e60c8f535b245de824f6dacf07ae5b9",
+									// 	obj.data.iD
+									// );
+									TKBimSdk.Element.locationTo(model.viewId, obj.data.iD, {
+										durationTime: 2, //定位过程中的飞行时间,默认3秒,非必要。
+										cameraAngle: {
+											rangeCoeff: 1, //距离系数,数值越小，摄像头距离目标越近,默认1,非必要。
+											heading: 0, //镜头偏航角(角度值),镜头左右方向,正北方为0°,正值为右,负值为左,默认0,非必要
+											pitch: 0, //镜头仰俯角(角度值),镜头上下方向,平视为0°,正值为上,负值为下,默认0,非必要
+										},
+									});
+								}
+							},
+							showCheckbox: false, //是否显示复选框
+							accordion: true,
+							spread: true,
+							data: JSON.parse(
+								JSON.stringify(data)
+									.replace(/name/g, "title")
+									.replace(/childs/g, "children")
+							),
+						});
+					});
+				}, 300);
+			},
+			beforeSend: function (xhr) {
+				xhr.setRequestHeader("safeToken", sessionStorage.getItem("token"));
+			},
+			error: function (data) {
+				console.log("error");
+			},
+		});
+	}
+
+</script>
+
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+	<title>轴网</title>
+
+	<!-- 核心引擎（必须引用） -->
+	<link href="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/Widgets/widgets.css" rel="stylesheet" />
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkgis/v0.9.4/TkEngine.js"></script>
+
+	<!-- 引擎插件（必须引用） -->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/three.min.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/jquery-3.4.1.min.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/plugin/html2canvas.min.js"></script>
+
+	<!-- 提供对外bim功能接口（必须引用）-->
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbim.js"></script>
+	<script src="http://60.30.241.14:2650/bimjs/tkengines/tkbim/v0.9.4/tkbimsdk.js"></script>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden">
+	<!-- 引擎渲染容器 -->
+	<div id="tkEngineContainer" style="width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden"></div>
+
+	<div style="border-radius: 5px;padding: 5px; background-color: rgba(39, 39, 39, 0.7);position: absolute;z-index: 10;top: 10px;left: 5px;display: flex;flex-direction: column;align-items: center;"
+		id="info">
+		<!-- <img style="width: 20px" src="../img/楼层平面 - F1.png" alt="" /> -->
+		<button type="button" onclick="showAxialnet(true)">
+			轴网显示
+		</button>
+		<button type="button" onclick="showAxialnet(false)" style="margin-top: 10px">
+			轴网隐藏
+		</button>
+	</div>
+
+	<div style="display: none; border-radius: 5px;padding: 5px; background-color: rgba(39, 39, 39, 0.7);
+    position: absolute;z-index: 10;top: 90px;left: 10px;align-items: center;" id="levePanel">
+		<input id="levelSlider" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1"
+			data-slider-value="0" data-slider-orientation="vertical" />
+	</div>
+</body>
+
+<script>
+
+	//模型配置
+	let model = {
+		projectId: "bd425ebdc86b457992a99471fd67ddae", //项目id
+		viewId: "0e60c8f535b245de824f6dacf07ae5b9", //模型viewId
+		modelCenter: {
+			longitude: 117.24249519270747,
+			latitude: 39.080722698745542,
+			altitude: 3,
+		}, //模型中心点坐标：{经度,纬度,高程}
+		viewRatio: 50, //模型可视距离系数
+	};
+
+
+	//场景配置
+	let sceneOptions = {
+		isBimViewMode: true, //是否BIM模式加载(false:GIS模式，true:BIM模式，默认true),非必填。
+		isModelsCenter: true, //设置模型场景下的旋转中心( true：以模型为中心,false：以GIS场景为中心，默认false),非必填。
+		isTransparentOfDis: 50, //相机与选中构件透明化大距离，默认50米，设置为0则相机与构件中间始终透明,非必要。
+		controls: {
+			visibleCube: true, //是否显示操作器,默认true,非必填
+			visibleFPS: false, //是否显示帧率,默认true,非必填
+		},
+	};
+
+	let bimCallbacks = {
+		sceneInitedCb: () => {
+			//设置模型集合
+			TKBimSdk.TK3DTileset.setCollect([model.viewId], true);
+
+		},
+		//左键点击
+		onMouseLeftClickCb: (data) => {
+			console.log(data.pos)
+		},
+		//右键点击
+		onMouseRightClick: (data) => { },
+		//左键拖拽
+		onMouseLeftDraggingCb: () => { },
+		//滚轮滚动事件
+		onMouseWheelCb: () => { },
+		//框选构件回调
+		onBoxChooseCb: (viewIds) => { },
+
+		//当前模型剩余Tileset文件数量（num：剩余Tileset文件数量）
+		onTilesetLoadingCb: (num) => {
+			if (num === 0) {
+				$("#loadChange").text("加载完毕");
+			} else {
+				$("#loadChange").text("剩余数量:" + num);
+			}
+		},
+	};
+
+	//添加模型
+	TKBimSdk.TK3DTileset.add3DTiles_Bim(model);
+	// 初始化场景
+	TKBimSdk.Scene.loadScene(sessionStorage.getItem("token"), sceneOptions, bimCallbacks);
+
+	//轴网显隐
+	function showAxialnet(isVisible) {
+		TKBimSdk.AxialNet.setVisible(model.viewId, isVisible);
+		if (isVisible === true) {
+			get3DTilesetLevel();
+		} else {
+			$("#levePanel").hide();
+		}
+	}
+
+	function get3DTilesetLevel() {
+		let version = TKBimSdk.TK3DTileset.getCurrentVersion(model.viewId);
+		// 获取模型轴网标高数据
+		let levelUrl = `https://tkbim-dataserver.tfhulian.com:2627/bimserver/modelinfo/levelinfo/${model.projectId}/${model.viewId}/${version}`;
+
+		var settings = {
+			"url": levelUrl,
+			"method": "GET",
+			"timeout": 0,
+			"headers": {
+				"safetoken": sessionStorage.getItem("token")
+			},
+		};
+
+		$.ajax(settings).done(function (response) {
+			$("#levePanel").show();
+			let levels = response.data.sort(compare("elevation"));
+
+			let levelSlider = new Slider("#levelSlider", {
+				step: 1,
+				min: 0,
+				max: levels.length - 1,
+				reversed: true
+			}).on("slide", function (data) {
+				//设置轴网标高索引
+				TKBimSdk.AxialNet.setLevel(data.value)
+			});
+		});
+	}
+
+	function compare(attrName) {
+		return function (a, b) {
+			var value1 = a[attrName];
+			var value2 = b[attrName];
+			return value1 - value2;
+		}
+	}
+</script>
+
+</html>
