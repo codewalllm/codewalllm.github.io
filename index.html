@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <title>天房科技</title>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/function.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/vue.prod.js"></script>
+    <script src="js/element.js"></script>
+    <script src="js/axios.js"></script>
+    <style>
+        #viewCubeDiv {
+            position: absolute !important;
+            top: 10px !important;
+            margin: 8px !important;
+        }
+
+        .tkEngine-performanceDisplay-defaultContainer {
+            top: 34px !important;
+        }
+
+        .el-tree {
+            background: none;
+        }
+
+        .el-tree-node__content:hover {
+            background: none;
+            background: #3782dc;
+        }
+
+        .el-tree-node:focus>.el-tree-node__content {
+            color: #32ddff;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .cursor-wait {
+            cursor: wait;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="vue" class="position-f w-100p h-100p">
+        <div id="tkEngineContainer" class="w-100p h-100p"></div>
+        <div class="position-a"
+            style="font-size: 12px;left:10px;bottom: 10px;background: rgba(24, 37, 62, 0.8);color:#eee;padding: 5px 10px;border-radius: 3px;">
+            <span v-if="remainingLoads"> 剩余数量：{{remainingLoads}}</span>
+            <span v-else>加载完毕</span>
+        </div>
+        <div class="position-a" v-if="treeData.length"
+            style="min-width:150px;background-color: rgba(24, 37, 62, 0.8);top:0px;left:0px;margin: 10px;padding: 10px;overflow: auto;"
+            :style="`max-height:${pageHeight}px`">
+            <el-tree ref="tree" class="color-f" node-key="iD" :default-checked-keys="defaultCheckedKeys"
+                :data="treeData" :props="defaultProps" show-checkbox @check-change="checkChange"
+                @node-click="treeNodeClick"></el-tree>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    // 获取token
+    let getToken = () => {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: "https://auth.tfhulian.com/tfproject-auth/auth/createToken.rest",
+                method: "post",
+                headers: { 'Content-Type': 'application/json;charset=utf8' },
+                data: JSON.stringify({ payload: JSON.stringify({ bimProjectId: "bd425ebdc86b457992a99471fd67ddae" }) }),
+                success(res) {
+                    if (res.code == 200) {
+                        let tokenTime = new Date().getTime() + (24 * 60 * 60 - 1) * 1000
+                        sessionStorage.setItem("token", res.data)
+                        sessionStorage.setItem("tokenTime", tokenTime)
+                        sessionStorage.setItem("tokenDateTime", PARSETIME(tokenTime))
+                        resolve(res)
+                    } else {
+                        reject(res)
+                    }
+                }
+            })
+        })
+    }
+    Vue.createApp({
+        data() {
+            return {
+                pageWidth: 0,
+                pageHeight: 0,
+                // 页面加载状态
+                loading: null,
+                models: [{
+                    baseDomain: "https://tkbim-dataserver.tfhulian.com:2627", // BIM模型数据接口服务域名地址
+                    projectId: "bd425ebdc86b457992a99471fd67ddae", //项目id
+                    viewId: "0e60c8f535b245de824f6dacf07ae5b9", //模型viewId
+                    modelCenter: {
+                        longitude: 117.24249519270747,
+                        latitude: 39.080722698745542,
+                        altitude: 3,
+                    }, //模型中心点坐标：{经度,纬度,高程}
+                    viewRatio: 200, //模型可视距离系数
+                }],
+                treeData: [],
+                defaultProps: { label: "name", children: "childs" },
+                // 模型加载剩余数量
+                remainingLoads: 0,
+                // 默认选中
+                defaultCheckedKeys: [],
+                // 当前点击的数组
+                curClickTree: [],
+                // 延迟点击复选框时间
+                setTimeTreecheck: null,
+            }
+        },
+        created() {
+            // 设置iframe的窗口高度
+            window.addEventListener("resize", this.getWindowResizing);
+            this.getWindowResizing();
+        },
+        mounted() {
+            this.loadInfo("获取token中...");
+            getToken().then(() => { this.loading.close(); this.init() })
+        },
+        methods: {
+            // 鼠标状态
+            mouseWait(status) {
+                status ? $("body").addClass("cursor-wait") : $("body").removeClass("cursor-wait")
+            },
+            // 窗口的宽高
+            getWindowResizing() {
+                this.pageWidth = window.innerWidth;
+                this.pageHeight = window.innerHeight - 80;
+                let iframeDoc = document.getElementById("iframeDoc");
+                if (iframeDoc) {
+                    iframeDoc.setAttribute("height", this.pageHeight);
+                }
+            },
+            // 页面loading
+            loadInfo(text) {
+                // 获取token
+                this.loading = this.$loading({
+                    lock: true,
+                    text: text || "加载中...",
+                    spinner: "el-icon-loading",
+                    background: "rgba(0, 0, 0, 0.7)",
+                });
+            },
+            init() {
+                this.loadInfo("引擎加载中...");
+                LOADENGINE().then(() => {
+                    this.loading.close()
+                    TKBimSdk.Scene.loadScene(
+                        sessionStorage.getItem("token"),
+                        { isBimViewMode: true, isTransparentOfDis: 0, controls: { visibleCube: true, visibleFPS: true } },
+                        {
+                            sceneInitedCb: () => { this.AddModels() },
+                            onTilesetLoadingCb: (num) => { this.remainingLoads = num },
+                        }
+                    );
+                });
+            },
+            AddModels(models = this.models) {
+                let num = 0;
+                TKBimSdk.TK3DTileset.add3DTiles_Bims(models, (viewId) => {
+                    //添加模型的回调方法
+                    TKBimSdk.TK3DTileset.setCollect(models.map(model => model.viewId), true); //设置模型组同时移动到模型位置
+                    num++;
+                    // 判断模型加载完调取菜单树
+                    if (models.length <= num) {
+                        this.GetTreerootInfo()
+                    }
+                });
+            },
+
+            // 获取树的信息
+            GetTreerootInfo() {
+                this.treeData.length = 0;
+                let request = (index) => {
+                    let model = this.models[index];
+                    axios.get(`https://tkbim-dataserver.tfhulian.com:7443/bimserver/modelinfo/treeroot/${model.projectId}/${model.viewId}/${TKBimSdk.TK3DTileset.getCurrentVersion(model.viewId)}`).then(res => {
+                        this.BIMGetChildsEleIds(Object.assign(res.data.data, model))
+                        this.treeData.push(res.data.data);
+                        this.defaultCheckedKeys = this.treeData.map(item => item.iD)
+                        index++;
+                        if (this.models.length > index) {
+                            request(index)
+                        } else {
+                            this.mouseWait(false)
+                        }
+                    })
+                }
+                this.mouseWait(true)
+                request(0)
+            },
+            // 获取菜单当前项下的构件id
+            BIMGetChildsEleIds(item) {
+                return new Promise((resolve) => {
+                    let eleIds = [];
+                    getEleId(item);
+                    function getEleId(item) {
+                        if (item.childs) {
+                            item.childs.map((child) => {
+                                item.projectId && (child.projectId = item.projectId);
+                                item.viewId && (child.viewId = item.viewId);
+                                item.version && (child.version = item.version);
+                                getEleId(child)
+                            });
+                        } else {
+                            eleIds.push(item.eleId);
+                        }
+                    }
+                    resolve(eleIds);
+                });
+            },
+            // 定位到当前点击的元素 - 定位到构件
+            treeNodeClick(item) {
+                let { viewId, eleId } = item
+                if (viewId && eleId) {
+                    TKBimSdk.Element.locationTo(viewId, eleId)
+                }
+            },
+            // 当前树节点被点击
+            checkChange(item, itemStatus) {
+                this.curClickTree.push(Object.assign(item, { itemStatus }));
+                this.setTimeTreecheck && clearTimeout(this.setTimeTreecheck);
+                this.setTimeTreecheck = setTimeout(() => {
+                    this.checkChangeEleIdsVisible(
+                        this.curClickTree[0],
+                        this.curClickTree[0].itemStatus
+                    );
+                    this.curClickTree.length = 0;
+                }, 50);
+            },
+            // 点击复选框后模型下构件的显隐
+            checkChangeEleIdsVisible(item, status) {
+                return new Promise((resolve) => {
+                    if (item.viewId && item.eleId) {
+                        TKBimSdk.Element.setVisible(item.viewId, [item.eleId], status);
+                        resolve();
+                    } else {
+                        // 点击不是根路径的显隐
+                        this.BIMGetChildsEleIds(item).then((eleIds) => {
+                            TKBimSdk.Element.setVisible(item.viewId, eleIds, status);
+                            resolve();
+                        });
+                    }
+                });
+            },
+        }
+    }).use(ElementPlus).mount('#vue')
+</script>
+
+</html>
