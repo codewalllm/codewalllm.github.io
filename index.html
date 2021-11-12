@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <title>codewalllm</title>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/common.js"></script>
+    <script src="js/vue.prod.js"></script>
+    <script src="js/element.js"></script>
+    <script src="js/axios.js"></script>
+</head>
+
+<body>
+    <div id="vue" class="position-f w-100p h-100p">
+        <div class="flex margin-t-10 margin-l-20" v-for="(item,index) in fileUrls" :key="index">
+            <div class="margin-r-20">{{item.name}}:</div>
+            <div>{{item.url}}</div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    Vue.createApp({
+        data() {
+            return {
+                fileUrls: [
+                    { name: '样式', url: 'css/common.css' },
+                    { name: '方法', url: 'js/common.js' },
+                    { name: 'vue', url: 'js/vue.prod.js' },
+                    { name: 'element', url: 'js/element.js' },
+                    { name: 'axios', url: 'js/axios.js' },
+                ]
+            }
+        },
+    }).use(ElementPlus).directive('drag', VUEFUNCTION().directive.drag).mount('#vue')
+</script>
+
+</html>
