@@ -17,7 +17,7 @@
 <body>
     <div id="vue" class="position-f w-100p h-100p">
         <div class="flex margin-t-10 margin-l-20" v-for="(item,index) in fileUrls" :key="index">
-            <div class="margin-r-20">{{item.name}}:</div>
+            <div class="margin-r-20" v-text='`<!-- ${item.name} -->`'></div>
             <div v-if="GETFILEINFO(item.url).fileType=='css'" v-text='`<link rel="stylesheet" href="${item.url}">`'></div>
             <div v-else v-text='`<script src="${item.url}"></script>`'></div>
         </div>
