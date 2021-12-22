@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>这个好玩吗</title>
+  <style>
+    h3 {
+      text-align: center;
+      color: #5A5A5A;
+    }
+
+    body {
+      background: #000;
+    }
+
+    #box {
+      width: 400px;
+      height: 400px;
+      margin: 300px auto;
+      /* background: #ccc; */
+      position: relative;
+      transform: perspective(800px) rotateY(-60deg) rotateX(45deg);
+      transform-style: preserve-3d;
+    }
+
+    #box div {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-size: cover;
+      -webkit-box-shadow: 0 0 200px #5fbcff;
+      opacity: .8;
+    }
+
+    .front {
+      transform: translateZ(200px);
+      background: url(images/a1.png);
+    }
+
+    .back {
+      transform: translateZ(-200px);
+      background: url(images/a2.png);
+    }
+
+    .left {
+      transform: translateX(-200px) rotateY(90deg);
+      background: url(images/a3.png);
+    }
+
+    .right {
+      transform: translateX(200px) rotateY(90deg);
+      background: url(images/a4.png);
+    }
+
+    .top {
+      transform: translateY(-200px) rotateX(90deg);
+      background: url(images/a5.png);
+    }
+
+    .bottom {
+      transform: translateY(200px) rotateX(90deg);
+      background: url(images/a6.png);
+    }
+  </style>
+  <script>
+    window.onload = function () {
+      var oBox = document.querySelector('#box');
+
+      var y = 0;
+      var x = 0;
+      oBox.onmousedown = function (ev) {
+        var oEvent = ev || event;
+        var disX = oEvent.clientX - y;
+        var disY = oEvent.clientY - x;
+        document.onmousemove = function (ev) {
+          var oEvent = ev || event;
+          x = oEvent.clientY - disY;
+          y = oEvent.clientX - disX;
+          oBox.style.transform = 'perspective(800px) rotateX(' + (-x) + 'deg) rotateY(' + y + 'deg)';
+        };
+        document.onmouseup = function () {
+          document.onmousemove = null;
+          document.onmouseup = null;
+        };
+        return false;
+      };
+      oBox.ontouchstart = function (ev) {
+        var oEvent = ev || event;
+        var disX = oEvent.touches[0].clientX - y;
+        var disY = oEvent.touches[0].clientY - x;
+        document.ontouchmove = function (ev) {
+          var oEvent = ev || event;
+          x = oEvent.touches[0].clientY - disY;
+          y = oEvent.touches[0].clientX - disX;
+          oBox.style.transform = 'perspective(800px) rotateX(' + (-x) + 'deg) rotateY(' + y + 'deg)';
+        };
+        document.ontouchend = function () {
+          document.ontouchmove = null;
+          document.ontouchend = null;
+        };
+        return false;
+      }
+    };
+  </script>
+</head>
+
+<body>
+  <div id="box">
+    <div class="front"></div>
+    <div class="back"></div>
+    <div class="top"></div>
+    <div class="bottom"></div>
+    <div class="left"></div>
+    <div class="right"></div>
+  </div>
+  <div style="color: #fff;text-align: center;font-size: 30px;">
+    这个好玩吗
+  </div>
+</body>
+
+</html>
