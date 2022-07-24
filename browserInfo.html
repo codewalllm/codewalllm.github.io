@@ -12,11 +12,10 @@
 
 <body>
   <div id="navigator"></div>
-  <div id="info"></div>
+  <div id="info">开始检测...</div>
 </body>
 <script>
   document.getElementById('navigator').innerText = JSON.stringify(navigator.userAgent)
-  document.getElementById('info').innerText = "开始检测..."
   document.getElementById('info').innerText = JSON.stringify(getBrowser())
   function getBrowser() {
     var ua = navigator.userAgent.toLowerCase(),
