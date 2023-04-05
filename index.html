@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
     <title>codewalllm</title>
     <link rel="stylesheet" href="https://codewalllm.github.io/css/common.css">
@@ -18,8 +19,10 @@
     <div id="vue" class="position-f w-100p h-100p">
         <div class="margin-t-10 margin-l-20" v-for="(item,index) in fileUrls" :key="index">
             <div class="margin-r-20" v-text='`<!-- ${item.name} -->`'></div>
-            <div v-if="GETFILEINFO(item.url).fileType=='css'" v-text='`<link rel="stylesheet" href="${item.url}">`'></div>
+            <div v-if="GETFILEINFO(item.url).fileType=='css'" v-text='`<link rel="stylesheet" href="${item.url}">`'>
+            </div>
             <div v-else v-text='`<script src="${item.url}"></script>`'></div>
+            <div>3306</div>
         </div>
     </div>
 </body>
