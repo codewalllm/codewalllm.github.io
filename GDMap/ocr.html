@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- <script src="https://cdn.jsdelivr.net/gh/naptha/tesseract.js@1.0.10/dist/tesseract.js"></script> -->
+  <script src="./js/tesseract.min.js"></script>
+</head>
+
+<body>
+
+</body>
+<script>
+  // let img = 'https://tesseract.projectnaptha.com/img/eng_bw.png'
+  // let img = './img/bankcard.jpg'
+  // let img = './img/taikangjincard.jpg'
+  let img = './img/taikangjincard2.jpg'
+  const picOcr = (image = img) => {
+    console.log("image", image)
+    Tesseract.recognize(
+      image, language = 'eng',
+      {
+        logger: m => console.log(m)
+      }
+    )
+      .then(result => {
+        console.log("result:", result);
+        console.log("text:", result.data.text);
+        console.log('number:', result.data.text.replace(/[^\d]/g, ""));
+      })
+      .catch(error => { console.error("error", error); })
+  }
+  window.onload = () => {
+    setTimeout(() => {
+      picOcr(img)
+    }, 1000)
+  }
+</script>
+
+</html>
