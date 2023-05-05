@@ -7,28 +7,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>图片文字识别 - 数字</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <!-- Import vue -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Import style -->
+  <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+  <!-- Import Vue 3 -->
+  <script src="//unpkg.com/vue@3"></script>
+  <!-- Import component library -->
+  <script src="//unpkg.com/element-plus"></script>
 </head>
 
 <body>
   <div id="app">
-    <button @click="tesseractCallback()">返回文字</button>
+    <div>选择需要识别的图片</div>
+    <el-upload v-loading="loading" action="#" list-type="picture-card" :auto-upload="false" :on-change="handleChange">
+      <el-button type="primary">返回文字</el-button>
+    </el-upload>
+    <div>图片中识别的数字</div>
     <div v-text="retNumber"></div>
   </div>
 </body>
-<script type="module">
-  import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js'
+<script>
+  const { createApp } = Vue
   createApp({
     data() {
       return {
-        retNumber: '显示数字区域'
+        loading: false,
+        retNumber: '显示数字区域',
       }
     },
     methods: {
+      // 图片数据
+      handleChange(uploadFile, uploadFiles) {
+        console.log(uploadFile, uploadFiles);
+        this.tesseractCallback(uploadFile.url)
+      },
       // 识别图片 - 返回数字
       tesseractCallback(image = './img/taikangjincard2.jpg', language = 'eng') {
         return new Promise((resolve, reject) => {
+          this.loading = true
           Tesseract.recognize(
-            image, language,
+            image,
+            language,
             {
               logger: m => console.log(m)
             }
@@ -41,10 +61,13 @@
               console.error("Tesseract - error:", error);
               reject()
             })
+            .finally(() => {
+              this.loading = false
+            })
         })
       }
     }
-  }).mount('#app') 
+  }).use(ElementPlus).mount('#app') 
 </script>
 
 </html>
