@@ -66,19 +66,31 @@
             // 打开定位信息
             openLocation() {
                 wx.ready(() => {
-                    wx.openLocation({
-                        longitude: 117,
-                        latitude: 42,
-                        name: "测试地图",
-                        address: "这个是地址",
-                        success: (success) => {
-                            console.log("openLocation:success", success)
+                    wx.checkJsApi({
+                        jsApiList: ["openLocation"],
+                        success: (checkJsApi) => {
+                            console.log("checkJsApi:success", checkJsApi)
+                            wx.openLocation({
+                                longitude: 117,
+                                latitude: 42,
+                                name: "测试地图",
+                                address: "这个是地址",
+                                success: (openLocation) => {
+                                    console.log("openLocation:success", openLocation)
+                                },
+                                fail: (fail) => {
+                                    console.log("openLocation:fail", openLocation)
+                                },
+                                complete: (complete) => {
+                                    console.log("openLocation:complete", openLocation)
+                                }
+                            })
                         },
-                        fail: (fail) => {
-                            console.log("openLocation:fail", fail)
+                        fail: (checkJsApi) => {
+                            console.log("checkJsApi:fail", checkJsApi)
                         },
-                        complete: (complete) => {
-                            console.log("openLocation:complete", complete)
+                        complete: (checkJsApi) => {
+                            console.log("checkJsApi:complete", checkJsApi)
                         }
                     })
                 })
