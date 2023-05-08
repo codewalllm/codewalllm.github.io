@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>eruda.init();</script>
     <script src="https://res2.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- Import style -->
     <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
     <!-- Import Vue 3 -->
@@ -20,19 +22,21 @@
 <body>
     <div id="app">
         <el-button @click="openLocation()">打开定位：openLocation</el-button>
+        <el-button @click="signature()">签名：signature</el-button>
     </div>
 </body>
 <script>
     const { createApp } = Vue
     createApp({
         methods: {
+            // 打开定位信息
             openLocation() {
                 wx.config({
                     debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
                     appId: "wx1a63dafb9f2d8684", // 必填，公众号的唯一标识
-                    timestamp: `${new Date().getTime()}`, // 必填，生成签名的时间戳
-                    nonceStr: `${new Date().getTime()}`, // 必填，生成签名的随机串
-                    signature: `${new Date().getTime()}`,// 必填，签名
+                    timestamp: `1683550683`, // 必填，生成签名的时间戳
+                    nonceStr: `liuming`, // 必填，生成签名的随机串
+                    signature: `9813bfeae6664ea92defcf5cf31dad43eb876fe8`,// 必填，签名
                     jsApiList: ['checkJsApi', 'openLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
                 });
                 wx.ready(() => {
@@ -42,13 +46,13 @@
                         name: "测试地图",
                         address: "这个是地址",
                         success: (success) => {
-                            console.log("success", success)
+                            console.log("openLocation:success", success)
                         },
                         fail: (fail) => {
-                            console.log("fail", fail)
+                            console.log("openLocation:fail", fail)
                         },
                         complete: (complete) => {
-                            console.log("complete", complete)
+                            console.log("openLocation:complete", complete)
                         }
                     })
                 })
