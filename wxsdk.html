@@ -51,7 +51,8 @@
         },
         methods: {
             setWxconfig() {
-                axios.get('http://192.168.0.5:3000/wxServer/signature').then((res) => {
+                var url = encodeURIComponent(window.location.href.split("#")[0]);
+                axios.post('http://192.168.0.5:3000/wxServer/signature', { url }).then((res) => {
                     console.log(res.data)
                     let result = res.data
                     if (result.code == 0) {
