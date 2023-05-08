@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://res2.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <!-- Import Vue 3 -->
+    <script src="//unpkg.com/vue@3"></script>
+</head>
+
+<body>
+    <div id="app">
+        <button @click="openLocation()">打开地图</button>
+    </div>
+</body>
+<script>
+    const { createApp } = Vue
+    createApp({
+        methods: {
+            openLocation() {
+                wx.openLocation({
+                    longitude: 117,
+                    latitude: 42,
+                    name: "测试地图",
+                    address: "这个是地址"
+                })
+            }
+        }
+    }).mount('#app') 
+</script>
+
+</html>
