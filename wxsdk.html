@@ -26,7 +26,7 @@
         <div v-for="(value,key,index) in wxconfig" :key="index">
             <div> {{ key }} : {{ value }} </div>
         </div>
-        <el-button @click="openLocation()">打开定位：openLocation</el-button>
+        <el-button @click="checkJsApi()">打开定位：openLocation</el-button>
     </div>
 </body>
 <script>
@@ -40,7 +40,7 @@
                     timestamp: ``, // 必填，生成签名的时间戳
                     nonceStr: ``, // 必填，生成签名的随机串
                     signature: ``,// 必填，签名
-                    jsApiList: ['checkJsApi', 'openLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+                    jsApiList: ['checkJsApi', 'getLocation', 'openLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
                 }
             }
         },
@@ -50,6 +50,7 @@
             })
         },
         methods: {
+            // 微信配置
             setWxconfig() {
                 var url = encodeURIComponent(window.location.href.split("#")[0]);
                 axios.post('http://192.168.0.5:3000/wxServer/signature', { url }).then((res) => {
@@ -64,36 +65,56 @@
                     this.$message.error(err.message)
                 })
             },
-            // 打开定位信息
-            openLocation() {
+            // 调用jsapi
+            checkJsApi() {
                 wx.ready(() => {
                     wx.checkJsApi({
-                        jsApiList: ["openLocation"],
-                        success: (checkJsApi) => {
-                            console.log("checkJsApi:success", checkJsApi)
-                            wx.openLocation({
-                                longitude: 117,
-                                latitude: 42,
-                                name: "测试地图",
-                                address: "这个是地址",
-                                success: (openLocation) => {
-                                    console.log("openLocation:success", openLocation)
-                                },
-                                fail: (openLocation) => {
-                                    console.log("openLocation:fail", openLocation)
-                                },
-                                complete: (openLocation) => {
-                                    console.log("openLocation:complete", openLocation)
-                                }
-                            })
+                        jsApiList: ['getLocation', "openLocation"],
+                        success: (success) => {
+                            console.log("checkJsApi:success", success)
+                            this.getLocation()
                         },
-                        fail: (checkJsApi) => {
-                            console.log("checkJsApi:fail", checkJsApi)
+                        fail: (fail) => {
+                            console.log("checkJsApi:fail", fail)
                         },
-                        complete: (checkJsApi) => {
-                            console.log("checkJsApi:complete", checkJsApi)
+                        complete: (complete) => {
+                            console.log("checkJsApi:complete", complete)
                         }
                     })
+                })
+            },
+            // 获取经纬度
+            getLocation() {
+                wx.getLocation({
+                    type: "wgs84",
+                    success: (success) => {
+                        console.log("getLocation:success", success)
+                        this.openLocation(success)
+                    },
+                    fail: (fail) => {
+                        console.log("getLocation:fail", fail)
+                    },
+                    complete: (complete) => {
+                        console.log("getLocation:complete", complete)
+                    }
+                })
+            },
+            // 展示位置
+            openLocation({ longitude, latitude }) {
+                wx.openLocation({
+                    longitude: 117,
+                    latitude: 42,
+                    name: "测试地图",
+                    address: "这个是地址",
+                    success: (openLocation) => {
+                        console.log("openLocation:success", openLocation)
+                    },
+                    fail: (openLocation) => {
+                        console.log("openLocation:fail", openLocation)
+                    },
+                    complete: (openLocation) => {
+                        console.log("openLocation:complete", openLocation)
+                    }
                 })
             }
         }
