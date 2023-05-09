@@ -46,13 +46,13 @@
         },
         mounted() {
             this.$nextTick(() => {
+                console.log("进入页面")
                 let code = this.getUrlParam(code)
+                console.log("code:", code, !!code)
                 if (!!code) {
-                    console.log("code:", code)
                     this.pluginLogin()
                     this.setWxconfig()
                 } else {
-                    console.log("code: 去认证")
                     var url = encodeURIComponent(window.location.href);
                     window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx29bc7e1d33d38e7f&redirect_uri=${url}&response_type=code&scope=snsapi_userinfo#wechat_redirect`
                 }
