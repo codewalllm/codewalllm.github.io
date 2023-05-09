@@ -26,6 +26,7 @@
         <div v-for="(value,key,index) in wxconfig" :key="index">
             <div> {{ key }} : {{ value }} </div>
         </div>
+        <div>code: {{ code }}</div>
         <el-button @click="checkJsApi()">打开定位：openLocation</el-button>
     </div>
 </body>
@@ -41,15 +42,16 @@
                     nonceStr: ``, // 必填，生成签名的随机串
                     signature: ``,// 必填，签名
                     jsApiList: ['pluginLogin', 'checkJsApi', 'getLocation', 'openLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
-                }
+                },
+                code: ''
             }
         },
         mounted() {
             this.$nextTick(() => {
                 console.log("进入页面")
-                let code = this.getUrlParam('code')
-                console.log("code:", code, !!code)
-                if (!!code) {
+                this.code = this.getUrlParam('code')
+                console.log("code:", this.code, !!this.code)
+                if (!!this.code) {
                     this.pluginLogin()
                     this.setWxconfig()
                 } else {
