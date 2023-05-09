@@ -44,6 +44,16 @@
                 }
             }
         },
+        created() {
+            let code = this.getUrlParam(code)
+            if (!!code) {
+                console.log("code:", code)
+            } else {
+                console.log("code: 去认证")
+                var url = encodeURIComponent(window.location.href);
+                window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx29bc7e1d33d38e7f&redirect_uri=${url}&response_type=code&scope=snsapi_userinfo#wechat_redirect`
+            }
+        },
         mounted() {
             this.$nextTick(() => {
                 this.pluginLogin()
@@ -51,6 +61,29 @@
             })
         },
         methods: {
+            // 获取地址栏参数
+            getUrlParam(name) {
+                if (window && window.this && window.this.$route && window.this.$route.query && window.this.$route.query[name]) {
+                    return window.this.$route.query[name] ? decodeURIComponent(window.this.$route.query[name]) : ""
+                } else {
+                    var search = window.location.search.substring(1)
+                    if (search.length) {
+                        try {
+                            let paramArr = search.split("&")
+                            let params = {}
+                            paramArr.forEach(item => {
+                                let keyVal = item.split("=")
+                                params[keyVal[0]] = keyVal.length > 1 ? keyVal[1] : ""
+                            })
+                            return params[name] ? decodeURIComponent(params[name]) : ''
+                        } catch (e) {
+                            return ""
+                        }
+                    } else {
+                        return ""
+                    }
+                }
+            },
             // 获取微信code
             pluginLogin() {
                 wx.pluginLogin({
