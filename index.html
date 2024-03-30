@@ -2,43 +2,44 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <meta name="viewport"
-    content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
-  <meta http-equiv="pragma" content="no-cache">
-  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="expires" content="0">
-  <title>进入服务</title>
-  <script type="module" crossorigin src="./js/index.9e2e50a4.js"></script>
-  <link rel="modulepreload" crossorigin href="./js/@vue.d99a4689.js">
-  <link rel="modulepreload" crossorigin href="./js/lodash-es.0028b47d.js">
-  <link rel="modulepreload" crossorigin href="./js/@vueuse.694ded36.js">
-  <link rel="modulepreload" crossorigin href="./js/@element-plus.a15d8bac.js">
-  <link rel="modulepreload" crossorigin href="./js/@popperjs.b78c3215.js">
-  <link rel="modulepreload" crossorigin href="./js/@ctrl.91de2ec7.js">
-  <link rel="modulepreload" crossorigin href="./js/dayjs.c6ebfc70.js">
-  <link rel="modulepreload" crossorigin href="./js/async-validator.8d480e59.js">
-  <link rel="modulepreload" crossorigin href="./js/memoize-one.63ab667a.js">
-  <link rel="modulepreload" crossorigin href="./js/normalize-wheel-es.3222b0a2.js">
-  <link rel="modulepreload" crossorigin href="./js/@floating-ui.3c499e77.js">
-  <link rel="modulepreload" crossorigin href="./js/element-plus.de2bccb2.js">
-  <link rel="modulepreload" crossorigin href="./js/vue-router.7457da8d.js">
-  <link rel="modulepreload" crossorigin href="./js/vuex.1b7a4305.js">
-  <link rel="stylesheet" href="./css/element-plus.7d47e4c0.css">
-  <link rel="stylesheet" href="./css/index.d901f86e.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <title>codewalllm</title>
+    <link rel="stylesheet" href="https://codewalllm.github.io/css/common.css">
+    <script src="https://codewalllm.github.io/js/common.js"></script>
+    <script src="https://codewalllm.github.io/js/vue.prod.js"></script>
+    <script src="https://codewalllm.github.io/js/element.js"></script>
+    <script src="https://codewalllm.github.io/js/axios.js"></script>
 </head>
 
 <body>
-
-  <!-- 
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-bottom: constant(safe-area-inset-bottom);
-    苹果底部安全距离
-   -->
-
-  <div id="app"></div>
-  
+    <div id="vue" class="position-f w-100p h-100p">
+        <div class="margin-t-10 margin-l-20" v-for="(item,index) in fileUrls" :key="index">
+            <div class="margin-r-20" v-text='`<!-- ${item.name} -->`'></div>
+            <div v-if="GETFILEINFO(item.url).fileType=='css'" v-text='`<link rel="stylesheet" href="${item.url}">`'>
+            </div>
+            <div v-else v-text='`<script src="${item.url}"></script>`'></div>
+        </div>
+    </div>
 </body>
+<script type="text/javascript">
+    Vue.createApp({
+        data() {
+            return {
+                fileUrls: [
+                    { name: '样式', url: 'https://codewalllm.github.io/css/common.css' },
+                    { name: '方法', url: 'https://codewalllm.github.io/js/common.js' },
+                    { name: 'vue', url: 'https://codewalllm.github.io/js/vue.prod.js' },
+                    { name: 'element', url: 'https://codewalllm.github.io/js/element.js' },
+                    { name: 'axios', url: 'https://codewalllm.github.io/js/axios.js' },
+                ],
+                GETFILEINFO,
+            }
+        },
+    }).use(ElementPlus).directive('drag', VUEFUNCTION().directive.drag).mount('#vue')
+</script>
 
 </html>

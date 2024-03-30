@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>无标题文档</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/vant.css">
+  <script src="js/common.js"></script>
+  <script src="js/vue.prod.js"></script>
+  <script src="js/vant.min.js"></script>
+  <style lang="scss">
+    * {
+      padding: 0;
+      margin: 0;
+      list-style-type: none;
+      font-size: 24px;
+    }
+
+    ul li:nth-of-type(1) {
+      background: rgba(255, 0, 0, 0.5);
+    }
+
+    ul li:nth-of-type(2) {
+      background: rgba(85, 85, 230, 0.5);
+    }
+
+    ul li:nth-of-type(3) {
+      background: rgba(255, 255, 0, 0.5);
+    }
+
+    ul li:nth-of-type(4) {
+      background: rgba(0, 255, 0, 0.5);
+    }
+
+    ul li:nth-of-type(5) {
+      background: rgba(255, 0, 255, 0.5);
+    }
+
+    ul li:nth-of-type(6) {
+      background: rgba(0, 255, 255, 0.5);
+    }
+
+    .lifangti {
+      transform-style: preserve-3d;
+      width: 200px;
+      height: 200px;
+      margin: 300px auto 0px;
+      position: relative
+    }
+
+    .lifangti {
+      animation: transformXYZ 15s linear infinite;
+      transform-origin: center center;
+    }
+
+    @keyframes transformXYZ {
+      from {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+      }
+
+      to {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+      }
+    }
+
+    .lifangti li {
+      width: 200px;
+      height: 200px;
+      border: 1px solid #000;
+      font-size: 30px;
+      text-align: center;
+      position: absolute;
+    }
+
+    .lifangti li:nth-of-type(1) {
+      transform: rotateY(90deg) translateZ(-200px);
+    }
+
+    .lifangti li:nth-of-type(2) {
+      transform: rotateY(90deg) translateZ(200px);
+    }
+
+    .lifangti li:nth-of-type(3) {
+      transform: rotateX(90deg) translateZ(200px);
+    }
+
+    .lifangti li:nth-of-type(4) {
+      transform: rotateX(90deg) translateZ(-200px);
+    }
+
+    .lifangti li:nth-of-type(5) {
+      transform: translateZ(200px);
+    }
+
+    .lifangti li:nth-of-type(6) {
+      transform: translateZ(-200px);
+    }
+
+    .pingmian {
+      position: relative;
+      width: 100%;
+      margin: 100px auto 0px;
+    }
+
+    .pingmian li {
+      margin: 10px 1.65%;
+      width: 30%;
+      height: 180px;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="vue">
+    <ul :class="boxType">
+      <li v-for="(item,index) in 6" :key="index" @click="curItem=item">{{index+1}}</li>
+    </ul>
+    <div style="margin-top: 300px;">{{curItem}}</div>
+    <div class="position-f flex flex-align-center w-100p align-center"
+      style="font-size: 50px;bottom: 0px;border-top: 2px solid #000;height: 150px;">
+      <div class="flex-1" @click="boxType='lifangti'">立方体</div>
+      <div class="flex-1" @click="boxType='pingmian'">展示信息</div>
+    </div>
+  </div>
+</body>
+<script>
+  Vue.createApp({
+    data() {
+      return {
+        boxType: 'lifangti',
+        curItem: 1
+      }
+    },
+    methods: {
+      pageIndex(item) {
+        this.curItem
+        console.log(item)
+      }
+    }
+  }).use(vant).mount('#vue')
+</script>
+
+</html>

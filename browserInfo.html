@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+</head>
+
+<body>
+  <div id="navigator"></div>
+  <div id="info">开始检测...</div>
+</body>
+<script>
+  document.getElementById('navigator').innerText = JSON.stringify(navigator.userAgent)
+  document.getElementById('info').innerText = JSON.stringify(getBrowser())
+  function getBrowser() {
+    var ua = navigator.userAgent.toLowerCase(),
+      re_msie = /\b(?:msie |ie |trident\/[0-9].*rv[ :])([0-9.]+)/;
+
+    function toString(object) {
+      return Object.prototype.toString.call(object);
+    }
+
+    function isString(object) {
+      return toString(object) === "[object String]";
+    }
+    var ENGINE = [
+      ["trident", re_msie],
+      ["webkit", /\bapplewebkit[\/]?([0-9.+]+)/],
+      ["gecko", /\bgecko\/(\d+)/],
+      ["presto", /\bpresto\/([0-9.]+)/]
+    ];
+    var BROWSER = [
+      ["ie", re_msie],
+      ["firefox", /\bfirefox\/([0-9.ab]+)/],
+      ["opera", /\bopr\/([0-9.]+)/],
+      ["chrome", / (?:chrome|crios|crmo)\/([0-9.]+)/],
+      ["safari", /\bversion\/([0-9.]+(?: beta)?)(?: mobile(?:\/[a-z0-9]+)?)? safari\//]
+    ];
+    // 操作系统信息识别表达式
+    var OS = [
+      ["windows", /\bwindows nt ([0-9.]+)/],
+      ["ipad", "ipad"],
+      ["ipod", "ipod"],
+      ["iphone", /\biphone\b|\biph(\d)/],
+      ["mac", "macintosh"],
+      ["linux", "linux"]
+    ];
+    var IE = [
+      [6, 'msie 6.0'],
+      [7, 'msie 7.0'],
+      [8, 'msie 8.0'],
+      [9, 'msie 9.0'],
+      [10, 'msie 10.0']
+    ];
+    var detect = function (client, ua) {
+      for (var i in client) {
+        var name = client[i][0],
+          expr = client[i][1],
+          isStr = isString(expr),
+          info;
+        if (isStr) {
+          if (ua.indexOf(expr) !== -1) {
+            info = name;
+            return info
+          }
+        } else {
+          if (expr.test(ua)) {
+            info = name;
+            return info;
+          }
+        }
+      }
+      return 'unknow';
+    };
+    return {
+      os: detect(OS, ua),  // 操作系统
+      browser: detect(BROWSER, ua),  // 浏览器
+      engine: detect(ENGINE, ua),    // 内核
+      //只有IE才检测版本，否则意义不大
+      version: re_msie.test(ua) ? detect(IE, ua) : ''
+    };
+  };
+</script>
+
+</html>
