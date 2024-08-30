@@ -6,8 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微信sdk</title>
-    <script src="https://cdn.bootcss.com/vConsole/3.3.0/vconsole.min.js"></script>
-    <script> new VConsole(); </script>
+    <script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
+    <script> new VConsole() </script>
     <script src="https://res2.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script type="text/javascript"
         src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -56,7 +56,11 @@
                     this.setWxconfig()
                 } else {
                     var url = encodeURIComponent(window.location.href);
-                    window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx29bc7e1d33d38e7f&redirect_uri=${url}&response_type=code&scope=snsapi_userinfo#wechat_redirect`
+                    var lh = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${this.wxconfig.appId}&redirect_uri=${url}&response_type=code&scope=snsapi_userinfo#wechat_redirect`
+                    console.log(lh)
+                    setTimeout(() => {
+                        window.location.href = lh
+                    }, 5000)
                 }
             })
         },
@@ -101,10 +105,14 @@
             // 微信配置
             setWxconfig() {
                 var url = encodeURIComponent(window.location.href.split("#")[0]);
-                axios.post('http://192.168.0.5:3000/wxServer/signature', { url }).then((res) => {
+                axios.post('https://www.codewalllm.cn:3001/beta/nestjs-tool/Weixin/Jsapi', {
+                    "appid": this.wxconfig.appId,
+                    "secret": "",
+                    url
+                }).then((res) => {
                     console.log(res.data)
                     let result = res.data
-                    if (result.code == 0) {
+                    if ([`0`, `200`, `2000`].includes(`${result.code}`)) {
                         wx.config(Object.assign(this.wxconfig, result.data));
                     } else {
                         this.$message.error(result.msg)
